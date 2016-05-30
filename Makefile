@@ -2,7 +2,7 @@ TARGET = test
 
 CC = gcc
 SRCS = test.c juson.c
-CFLAGS = -g -std=c11 -Wall -I./
+CFLAGS = -O2 -g -Wall -std=c11 -Wall -I./
 
 OBJS_DIR = build/
 OBJS = $(SRCS:.c=.o)

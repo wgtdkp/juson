@@ -3,18 +3,29 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 int main(int argc, char* argv[])
 {
     if (argc < 2)
         return -1;
 
-    juson_doc_t doc;
-    if (juson_load(&doc, argv[1]) == JUSON_ERR) {
+    juson_doc_t json;
+    if ((json.mem = juson_load(argv[1])) == NULL) {
         return -1;
     }
+    printf("sizeof(juson_value_t): %d \n", sizeof(juson_value_t));
+    printf("begin parsing...\n");
+    clock_t begin = clock();
+    juson_value_t* obj = juson_parse(&json);
+    printf("parse done\n");
+    if (obj == NULL) {
+        printf("parse failed\n");
+        return -1;
+    }
+    printf("parse time: %f\n", (clock() - begin) * 1.0f / CLOCKS_PER_SEC);
+    return 0;
     
-    juson_value_t* obj = juson_parse(&doc);
     if (obj == NULL)
         return  -1;
     assert(obj->t == JUSON_OBJECT);
@@ -45,6 +56,6 @@ int main(int argc, char* argv[])
         pair = pair->next;
     }
    
-   juson_destroy(&doc);
+   juson_destroy(&json);
     return 0;
 }

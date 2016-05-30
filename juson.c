@@ -21,7 +21,7 @@ static juson_value_t* juson_new(juson_doc_t* doc, juson_type_t t);
 static void juson_object_add(juson_value_t* obj, juson_value_t* pair);
 static void juson_pool_init(juson_pool_t* pool, int chunk_size);
 static juson_value_t* juson_alloc(juson_doc_t* doc);
-static void juson_parse_comment(juson_doc_t* doc);
+static char* juson_parse_comment(juson_doc_t* doc, char* p);
 static juson_value_t* juson_parse_object(juson_doc_t* doc);
 static juson_value_t* juson_parse_pair(juson_doc_t* doc);
 static juson_value_t* juson_parse_value(juson_doc_t* doc);
@@ -58,8 +58,8 @@ static char next(juson_doc_t* doc)
             p++;
         }
             
-        if (*p == '#') {
-            juson_parse_comment(doc);
+        if (*p == '/') {
+            p = juson_parse_comment(doc, p + 1);
         } else {
             break;
         }
@@ -77,10 +77,13 @@ static int try(juson_doc_t* doc, char x)
 {
     // Check empty array
     char* p = doc->p;
+    int line = doc->line;
+    
     char ch = next(doc);
     if (ch == x)
-        return 1;
+        return 1;    
     doc->p = p;
+    doc->line = line;
     return 0;
 }
 
@@ -107,30 +110,28 @@ static void juson_object_add(juson_value_t* obj, juson_value_t* pair)
     }
 }
 
-int juson_load(juson_doc_t* doc, char* file_name)
+char* juson_load(char* file_name)
 {
-    doc->file = fopen(file_name, "rb");
-    if (doc->file == NULL) {
-        juson_error(doc, "open file: '%s'' failed", file_name);
-        return JUSON_ERR;
-    }
+    FILE* file = fopen(file_name, "rb");
+    if (file == NULL)
+        return NULL;
     
     size_t len;
-    fseek(doc->file, 0, SEEK_END);
-    len = ftell(doc->file);
-    fseek(doc->file, 0, SEEK_SET);
+    fseek(file, 0, SEEK_END);
+    len = ftell(file);
+    fseek(file, 0, SEEK_SET);
     
-    doc->mem = malloc(len + 1);
-    if (doc->mem == NULL) {
-        juson_error(doc, "no memory");
-        fclose(doc->file);
-        return JUSON_ERR;
+    char* p = malloc(len + 1);
+    if (p == NULL) {
+        fclose(file);
+        return NULL;
     }
     
-    fread(doc->mem, 1, len, doc->file);
-    doc->mem[len] = '\0';
+    fread(p, len, 1, file);
+    p[len] = '\0';
     
-    return JUSON_OK;
+    fclose(file);
+    return p;
 }
 
 static void juson_pool_init(juson_pool_t* pool, int chunk_size)
@@ -163,15 +164,7 @@ static juson_value_t* juson_alloc(juson_doc_t* doc)
 
 void juson_destroy(juson_doc_t* doc)
 {
-    // Destroy pool
-    juson_pool_t* pool = &doc->pool;
-    for (int i = 0; i < pool->chunk_arr.size; i++)
-        free(pool->chunk_arr.adata[i]);
-    free(pool->chunk_arr.adata);
-    pool->chunk_arr.adata = NULL;
-    
-    // Release file and memory
-    fclose(doc->file);
+    // Release memory
     free(doc->mem);
     
     doc->val = NULL;
@@ -184,6 +177,14 @@ void juson_destroy(juson_doc_t* doc)
         free(p->data->adata);
         p = p->next;
     }
+    
+    // Destroy pool
+    juson_pool_t* pool = &doc->pool;
+    for (int i = 0; i < pool->chunk_arr.size; i++)
+        free(pool->chunk_arr.adata[i]);
+    free(pool->chunk_arr.adata);
+    pool->chunk_arr.adata = NULL;
+    
 }
 
 juson_value_t* juson_parse(juson_doc_t* doc)
@@ -211,17 +212,28 @@ juson_value_t* juson_parse_string(juson_doc_t* doc, char* str)
 }
 
 /*
- * Json defines no comment, the comment qson specified,
- * is the Python style comment(leading by '#')
+ * C/C++ style comment
  */
-static void juson_parse_comment(juson_doc_t* doc)
+static char* juson_parse_comment(juson_doc_t* doc, char* p)
 {
-    while (*doc->p != '\n' && *doc->p != 0)
-        doc->p++;
-    if (*doc->p == '\n') {
-        doc->line++;
-        doc->p++;
+    if (p[0] == '*') {
+        p++;
+        while (p[0] != '\0' && !(p[0] == '*' && p[1] == '/')) {
+            if (p[0] == '\n')
+                doc->line++;
+            p++;
+        }
+        if (p[0] != '\0')
+            p += 2;
+    } else if (p[0] == '/'){
+        while (p[0] != '\n' && p[0] != '\0')
+            p++;
+        if (p[0] == '\n') {
+            doc->line++;
+            p++;
+        }
     }
+    return p;
 }
 
 static juson_value_t* juson_parse_object(juson_doc_t* doc)
@@ -234,7 +246,7 @@ static juson_value_t* juson_parse_object(juson_doc_t* doc)
         return obj;
         
     while (1) {
-        JUSON_EXPECT(next(doc) == '\"', "unexpected character");
+        JUSON_EXPECT(next(doc) == '\"', "expect '\"'");
         juson_value_t* pair = juson_parse_pair(doc);
         if (pair == NULL)
             return NULL;
@@ -276,6 +288,7 @@ static juson_value_t* juson_parse_value(juson_doc_t* doc)
         return juson_parse_array(doc);
     case '\"':
         return juson_parse_token(doc);
+    
     case '0' ... '9':
     case '-':
         return juson_parse_number(doc);
@@ -284,6 +297,8 @@ static juson_value_t* juson_parse_value(juson_doc_t* doc)
         return juson_parse_bool(doc);
     case 'n':
         return juson_parse_null(doc);
+    case '\0':
+        JUSON_EXPECT(0, "unexpect end of file");
     default:
         JUSON_EXPECT(0, "unexpect character");
     }

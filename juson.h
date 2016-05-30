@@ -77,7 +77,6 @@ struct juson_pool {
 };
 
 typedef struct {
-    FILE* file;
     char* mem;
     char* p;
     
@@ -90,7 +89,7 @@ typedef struct {
     juson_pool_t pool;
 } juson_doc_t;
 
-int juson_load(juson_doc_t* doc, char* file_name);
+char* juson_load(char* file_name);
 juson_value_t* juson_parse(juson_doc_t* doc);
 juson_value_t* juson_parse_string(juson_doc_t* doc, char* str);
 void juson_destroy(juson_doc_t* doc);;
