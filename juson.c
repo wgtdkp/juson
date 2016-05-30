@@ -8,9 +8,9 @@
 #include <string.h>
 
 
-#define JUSON_EXPECT(cond, msg)      \
-if (!(cond)) {                        \
-    juson_error(doc, msg);                \
+#define JUSON_EXPECT(cond, msg)     \
+if (!(cond)) {                      \
+    juson_error(doc, msg);          \
     return NULL;                    \
 }
 
@@ -174,7 +174,7 @@ void juson_destroy(juson_doc_t* doc)
     fclose(doc->file);
     free(doc->mem);
     
-    doc->obj = NULL;
+    doc->val = NULL;
     
     juson_value_t* p = doc->arr_list.next;
     while (p != NULL) {
@@ -188,7 +188,7 @@ void juson_destroy(juson_doc_t* doc)
 
 juson_value_t* juson_parse(juson_doc_t* doc)
 {
-    doc->obj = NULL;
+    doc->val = NULL;
     doc->p = doc->mem;
     doc->line = 1;
     doc->ele_num = 0;
@@ -199,11 +199,9 @@ juson_value_t* juson_parse(juson_doc_t* doc)
     
     juson_pool_init(&doc->pool, 16);
     
-    if (next(doc) == '{') {
-        doc->obj = juson_parse_object(doc);
-    }
+    doc->val = juson_parse_value(doc);
     
-    return doc->obj;
+    return doc->val;
 }
 
 juson_value_t* juson_parse_string(juson_doc_t* doc, char* str)
@@ -428,6 +426,8 @@ static juson_value_t* juson_array_back(juson_value_t* arr)
 
 static juson_value_t* juson_add_array(juson_doc_t* doc, juson_value_t* arr)
 {
+    assert(arr->t == JUSON_ARRAY);
+    
     juson_value_t* node = juson_new(doc, JUSON_LIST);
     if (node == NULL)
         return NULL;

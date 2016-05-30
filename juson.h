@@ -84,7 +84,7 @@ typedef struct {
     int line;
     int ele_num;
     
-    juson_value_t* obj;
+    juson_value_t* val;
     juson_value_t arr_list;
     
     juson_pool_t pool;
