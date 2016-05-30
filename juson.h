@@ -91,5 +91,7 @@ char* juson_load(char* file_name);
 juson_value_t* juson_parse(juson_doc_t* doc);
 juson_value_t* juson_parse_string(juson_doc_t* doc, char* str);
 void juson_destroy(juson_doc_t* doc);
+juson_value_t* juson_object_get(juson_value_t* obj, char* name);
+juson_value_t* juson_array_get(juson_value_t* arr, size_t idx);
 
 #endif

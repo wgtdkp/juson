@@ -13,7 +13,7 @@
 if (!(cond)) {                      \
     juson_error(doc, msg);          \
     return NULL;                    \
-}
+};
 
 static void juson_error(juson_doc_t* doc, const char* format, ...);
 static char next(juson_doc_t* doc);
@@ -498,4 +498,29 @@ static juson_value_t* juson_parse_token(juson_doc_t* doc)
         }
     }
     return str; // Make compiler happy
+}
+
+juson_value_t* juson_object_get(juson_value_t* obj, char* name)
+{
+    if (onj->t != JUSON_OBJECT)
+        return NULL;
+        
+    juson_value_t* p = obj->head;
+    while (p != NULL) {
+        if (strncmp(p->key->stata, name, p->key->len) == 0)
+            return p->val;
+        p = p->next;
+    }
+    
+    return NULL;
+}
+
+juson_value_t* juson_array_get(juson_value_t* arr, size_t idx)
+{
+    if (arr->t != JUSON_OBJECT)
+        return NULL;
+    
+    if (idx >= arr->size)
+        return NULL;
+    return arr->adata[idx];
 }
