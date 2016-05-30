@@ -1,9 +1,11 @@
 #include "juson.h"
 
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
 
 int main(int argc, char* argv[])
 {
@@ -24,6 +26,7 @@ int main(int argc, char* argv[])
         return -1;
     }
     printf("parse time: %f\n", (clock() - begin) * 1.0f / CLOCKS_PER_SEC);
+    juson_destroy(&json);
     return 0;
     
     if (obj == NULL)

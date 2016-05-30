@@ -54,17 +54,16 @@ struct juson_value {
         };
         
         struct {
-            // Pair
-            struct {
-                juson_value_t* key; // string
-                juson_value_t* val;
-            };
-        
-            // List
-            struct {
+            union {
+                // Pair
+                struct {
+                    juson_value_t* key; // string
+                    juson_value_t* val;
+                };
+                // List
                 juson_value_t* data;
             };
-            juson_value_t* next; // pair
+            juson_value_t* next;
         };
     };
 };
@@ -81,7 +80,6 @@ typedef struct {
     char* p;
     
     int line;
-    int ele_num;
     
     juson_value_t* val;
     juson_value_t arr_list;
@@ -92,5 +90,6 @@ typedef struct {
 char* juson_load(char* file_name);
 juson_value_t* juson_parse(juson_doc_t* doc);
 juson_value_t* juson_parse_string(juson_doc_t* doc, char* str);
-void juson_destroy(juson_doc_t* doc);;
+void juson_destroy(juson_doc_t* doc);
+
 #endif

@@ -1,5 +1,6 @@
 #include "juson.h"
 
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>
@@ -192,7 +193,6 @@ juson_value_t* juson_parse(juson_doc_t* doc)
     doc->val = NULL;
     doc->p = doc->mem;
     doc->line = 1;
-    doc->ele_num = 0;
     
     doc->arr_list.t = JUSON_LIST;
     doc->arr_list.data = NULL;
@@ -331,7 +331,7 @@ static juson_value_t* juson_parse_bool(juson_doc_t* doc)
         b->bval = 0;
         doc->p = p + 5;
     } else {
-        JUSON_EXPECT(0, "unexpect 'true' or 'false'");
+        JUSON_EXPECT(0, "expect 'true' or 'false'");
     }
     
     return b;
