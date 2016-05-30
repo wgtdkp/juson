@@ -1,7 +1,7 @@
 TARGET = test
 
 CC = gcc
-SRCS = test.c qson.c
+SRCS = test.c juson.c
 CFLAGS = -g -std=c11 -Wall -I./
 
 OBJS_DIR = build/

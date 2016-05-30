@@ -1,4 +1,4 @@
-#include "qson.h"
+#include "juson.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -8,34 +8,34 @@
 #include <string.h>
 
 
-#define QSON_EXPECT(cond, msg)      \
+#define JUSON_EXPECT(cond, msg)      \
 if (!(cond)) {                        \
-    qson_error(doc, msg);                \
+    juson_error(doc, msg);                \
     return NULL;                    \
 }
 
-static void qson_error(qson_doc_t* doc, const char* format, ...);
-static char next(qson_doc_t* doc);
-static int try(qson_doc_t* doc, char x);
-static qson_value_t* qson_new(qson_doc_t* doc, qson_type_t t);
-static void qson_object_add(qson_value_t* obj, qson_value_t* pair);
-static void qson_pool_init(qson_pool_t* pool, int chunk_size);
-static qson_value_t* qson_alloc(qson_doc_t* doc);
-static void qson_parse_comment(qson_doc_t* doc);
-static qson_value_t* qson_parse_object(qson_doc_t* doc);
-static qson_value_t* qson_parse_pair(qson_doc_t* doc);
-static qson_value_t* qson_parse_value(qson_doc_t* doc);
-static qson_value_t* qson_parse_null(qson_doc_t* doc);
-static qson_value_t* qson_parse_bool(qson_doc_t* doc);
-static qson_value_t* qson_parse_number(qson_doc_t* doc);
-static qson_value_t* qson_parse_array(qson_doc_t* doc);
-static qson_value_t** qson_array_push(qson_value_t* arr);
-static qson_value_t* qson_array_back(qson_value_t* arr);
-static qson_value_t* qson_add_array(qson_doc_t* doc, qson_value_t* arr);
-static qson_value_t* qson_parse_token(qson_doc_t* doc);
+static void juson_error(juson_doc_t* doc, const char* format, ...);
+static char next(juson_doc_t* doc);
+static int try(juson_doc_t* doc, char x);
+static juson_value_t* juson_new(juson_doc_t* doc, juson_type_t t);
+static void juson_object_add(juson_value_t* obj, juson_value_t* pair);
+static void juson_pool_init(juson_pool_t* pool, int chunk_size);
+static juson_value_t* juson_alloc(juson_doc_t* doc);
+static void juson_parse_comment(juson_doc_t* doc);
+static juson_value_t* juson_parse_object(juson_doc_t* doc);
+static juson_value_t* juson_parse_pair(juson_doc_t* doc);
+static juson_value_t* juson_parse_value(juson_doc_t* doc);
+static juson_value_t* juson_parse_null(juson_doc_t* doc);
+static juson_value_t* juson_parse_bool(juson_doc_t* doc);
+static juson_value_t* juson_parse_number(juson_doc_t* doc);
+static juson_value_t* juson_parse_array(juson_doc_t* doc);
+static juson_value_t** juson_array_push(juson_value_t* arr);
+static juson_value_t* juson_array_back(juson_value_t* arr);
+static juson_value_t* juson_add_array(juson_doc_t* doc, juson_value_t* arr);
+static juson_value_t* juson_parse_token(juson_doc_t* doc);
 
 
-static void qson_error(qson_doc_t* doc, const char* format, ...)
+static void juson_error(juson_doc_t* doc, const char* format, ...)
 {
     fprintf(stderr, "error: line %d: ", doc->line);
     
@@ -47,7 +47,7 @@ static void qson_error(qson_doc_t* doc, const char* format, ...)
     fprintf(stderr, "\n");
 }
 
-static char next(qson_doc_t* doc)
+static char next(juson_doc_t* doc)
 {
     char* p = doc->p;
     while (1) {
@@ -59,7 +59,7 @@ static char next(qson_doc_t* doc)
         }
             
         if (*p == '#') {
-            qson_parse_comment(doc);
+            juson_parse_comment(doc);
         } else {
             break;
         }
@@ -73,7 +73,7 @@ static char next(qson_doc_t* doc)
     return *p;
 }
 
-static int try(qson_doc_t* doc, char x)
+static int try(juson_doc_t* doc, char x)
 {
     // Check empty array
     char* p = doc->p;
@@ -84,20 +84,20 @@ static int try(qson_doc_t* doc, char x)
     return 0;
 }
 
-static qson_value_t* qson_new(qson_doc_t* doc, qson_type_t t)
+static juson_value_t* juson_new(juson_doc_t* doc, juson_type_t t)
 {
-    qson_value_t* val = qson_alloc(doc);
+    juson_value_t* val = juson_alloc(doc);
     if (val == NULL)
         return val;
         
-    memset(val, 0, sizeof(qson_value_t));
+    memset(val, 0, sizeof(juson_value_t));
     val->t = t;
     return val;
 }
 
-static void qson_object_add(qson_value_t* obj, qson_value_t* pair)
+static void juson_object_add(juson_value_t* obj, juson_value_t* pair)
 {
-    assert(pair->t == QSON_PAIR);
+    assert(pair->t == JUSON_PAIR);
     if (obj->head == NULL) {
         obj->head = pair;
         obj->tail = pair;
@@ -107,12 +107,12 @@ static void qson_object_add(qson_value_t* obj, qson_value_t* pair)
     }
 }
 
-int qson_load(qson_doc_t* doc, char* file_name)
+int juson_load(juson_doc_t* doc, char* file_name)
 {
     doc->file = fopen(file_name, "rb");
     if (doc->file == NULL) {
-        qson_error(doc, "open file: '%s'' failed", file_name);
-        return QSON_ERR;
+        juson_error(doc, "open file: '%s'' failed", file_name);
+        return JUSON_ERR;
     }
     
     size_t len;
@@ -122,49 +122,49 @@ int qson_load(qson_doc_t* doc, char* file_name)
     
     doc->mem = malloc(len + 1);
     if (doc->mem == NULL) {
-        qson_error(doc, "no memory");
+        juson_error(doc, "no memory");
         fclose(doc->file);
-        return QSON_ERR;
+        return JUSON_ERR;
     }
     
     fread(doc->mem, 1, len, doc->file);
     doc->mem[len] = '\0';
     
-    return QSON_OK;
+    return JUSON_OK;
 }
 
-static void qson_pool_init(qson_pool_t* pool, int chunk_size)
+static void juson_pool_init(juson_pool_t* pool, int chunk_size)
 {
     pool->chunk_size = chunk_size;
     pool->allocated_n = 0;
     pool->cur = NULL;
     
-    pool->chunk_arr.t = QSON_ARRAY;
+    pool->chunk_arr.t = JUSON_ARRAY;
     pool->chunk_arr.size = 0;
     pool->chunk_arr.capacity = 0;
     pool->chunk_arr.adata = NULL;
 }
 
-static qson_value_t* qson_alloc(qson_doc_t* doc)
+static juson_value_t* juson_alloc(juson_doc_t* doc)
 {
-    qson_pool_t* pool = &doc->pool;
-    qson_value_t* back = qson_array_back(&pool->chunk_arr);
+    juson_pool_t* pool = &doc->pool;
+    juson_value_t* back = juson_array_back(&pool->chunk_arr);
     if (pool->cur == NULL || pool->cur - back == pool->chunk_size) {
-        qson_value_t** chunk = qson_array_push(&pool->chunk_arr);
+        juson_value_t** chunk = juson_array_push(&pool->chunk_arr);
         if (chunk == NULL)
             return NULL;
-        *chunk = malloc(pool->chunk_size * sizeof(qson_value_t));
-        QSON_EXPECT(*chunk != NULL, "no memory");
-        pool->cur = qson_array_back(&pool->chunk_arr);
+        *chunk = malloc(pool->chunk_size * sizeof(juson_value_t));
+        JUSON_EXPECT(*chunk != NULL, "no memory");
+        pool->cur = juson_array_back(&pool->chunk_arr);
     }
     pool->allocated_n++;
     return pool->cur++;
 }
 
-void qson_destroy(qson_doc_t* doc)
+void juson_destroy(juson_doc_t* doc)
 {
     // Destroy pool
-    qson_pool_t* pool = &doc->pool;
+    juson_pool_t* pool = &doc->pool;
     for (int i = 0; i < pool->chunk_arr.size; i++)
         free(pool->chunk_arr.adata[i]);
     free(pool->chunk_arr.adata);
@@ -176,9 +176,9 @@ void qson_destroy(qson_doc_t* doc)
     
     doc->obj = NULL;
     
-    qson_value_t* p = doc->arr_list.next;
+    juson_value_t* p = doc->arr_list.next;
     while (p != NULL) {
-        assert(p->data->t == QSON_ARRAY);
+        assert(p->data->t == JUSON_ARRAY);
         // The elements are allocated in pool.
         // Thus they shouldn't be freed.
         free(p->data->adata);
@@ -186,37 +186,37 @@ void qson_destroy(qson_doc_t* doc)
     }
 }
 
-qson_value_t* qson_parse(qson_doc_t* doc)
+juson_value_t* juson_parse(juson_doc_t* doc)
 {
     doc->obj = NULL;
     doc->p = doc->mem;
     doc->line = 1;
     doc->ele_num = 0;
     
-    doc->arr_list.t = QSON_LIST;
+    doc->arr_list.t = JUSON_LIST;
     doc->arr_list.data = NULL;
     doc->arr_list.next = NULL;
     
-    qson_pool_init(&doc->pool, 16);
+    juson_pool_init(&doc->pool, 16);
     
     if (next(doc) == '{') {
-        doc->obj = qson_parse_object(doc);
+        doc->obj = juson_parse_object(doc);
     }
     
     return doc->obj;
 }
 
-qson_value_t* qson_parse_string(qson_doc_t* doc, char* str)
+juson_value_t* juson_parse_string(juson_doc_t* doc, char* str)
 {
     doc->mem = str;
-    return qson_parse(doc);
+    return juson_parse(doc);
 }
 
 /*
  * Json defines no comment, the comment qson specified,
  * is the Python style comment(leading by '#')
  */
-static void qson_parse_comment(qson_doc_t* doc)
+static void juson_parse_comment(juson_doc_t* doc)
 {
     while (*doc->p != '\n' && *doc->p != 0)
         doc->p++;
@@ -226,9 +226,9 @@ static void qson_parse_comment(qson_doc_t* doc)
     }
 }
 
-static qson_value_t* qson_parse_object(qson_doc_t* doc)
+static juson_value_t* juson_parse_object(juson_doc_t* doc)
 {
-    qson_value_t* obj = qson_new(doc, QSON_OBJECT);
+    juson_value_t* obj = juson_new(doc, JUSON_OBJECT);
     if (obj == NULL)
         return NULL;
     
@@ -236,76 +236,76 @@ static qson_value_t* qson_parse_object(qson_doc_t* doc)
         return obj;
         
     while (1) {
-        QSON_EXPECT(next(doc) == '\"', "unexpected character");
-        qson_value_t* pair = qson_parse_pair(doc);
+        JUSON_EXPECT(next(doc) == '\"', "unexpected character");
+        juson_value_t* pair = juson_parse_pair(doc);
         if (pair == NULL)
             return NULL;
-        qson_object_add(obj, pair);
+        juson_object_add(obj, pair);
         
         char ch = next(doc);
         if (ch == '}')
             break;
-        QSON_EXPECT(ch == ',', "expect ','");
+        JUSON_EXPECT(ch == ',', "expect ','");
     }
     return obj;
 }
 
-static qson_value_t* qson_parse_pair(qson_doc_t* doc)
+static juson_value_t* juson_parse_pair(juson_doc_t* doc)
 {
-    qson_value_t* pair = qson_new(doc, QSON_PAIR);
+    juson_value_t* pair = juson_new(doc, JUSON_PAIR);
     if (pair == NULL)
         return NULL;
 
-    pair->key = qson_parse_token(doc);
+    pair->key = juson_parse_token(doc);
     if (pair->key == NULL)
         return NULL;
     
-    QSON_EXPECT(next(doc) == ':', "expect ':'");
+    JUSON_EXPECT(next(doc) == ':', "expect ':'");
     
-    pair->val = qson_parse_value(doc);
+    pair->val = juson_parse_value(doc);
     if (pair->val == NULL)
         return NULL;
 
     return pair;
 }
 
-static qson_value_t* qson_parse_value(qson_doc_t* doc)
+static juson_value_t* juson_parse_value(juson_doc_t* doc)
 {
     switch (next(doc)) {
     case '{':
-        return qson_parse_object(doc);
+        return juson_parse_object(doc);
     case '[':
-        return qson_parse_array(doc);
+        return juson_parse_array(doc);
     case '\"':
-        return qson_parse_token(doc);
+        return juson_parse_token(doc);
     case '0' ... '9':
     case '-':
-        return qson_parse_number(doc);
+        return juson_parse_number(doc);
     case 't':
     case 'f':
-        return qson_parse_bool(doc);
+        return juson_parse_bool(doc);
     case 'n':
-        return qson_parse_null(doc);
+        return juson_parse_null(doc);
     default:
-        QSON_EXPECT(0, "unexpect character");
+        JUSON_EXPECT(0, "unexpect character");
     }
         
     return NULL; // Make compiler happy
 }
 
-static qson_value_t* qson_parse_null(qson_doc_t* doc)
+static juson_value_t* juson_parse_null(juson_doc_t* doc)
 {
     char* p = doc->p;
     if (p[0] == 'u' && p[1] == 'l' && p[2] == 'l') {
         doc->p = p + 3;
-        return qson_new(doc, QSON_NULL);
+        return juson_new(doc, JUSON_NULL);
     }
     return NULL;
 }
 
-static qson_value_t* qson_parse_bool(qson_doc_t* doc)
+static juson_value_t* juson_parse_bool(juson_doc_t* doc)
 {
-    qson_value_t* b = qson_new(doc, QSON_BOOL);
+    juson_value_t* b = juson_new(doc, JUSON_BOOL);
     if (b == NULL)
         return NULL;
     
@@ -318,20 +318,20 @@ static qson_value_t* qson_parse_bool(qson_doc_t* doc)
         b->bval = 0;
         doc->p = p + 5;
     } else {
-        QSON_EXPECT(0, "unexpect 'true' or 'false'");
+        JUSON_EXPECT(0, "unexpect 'true' or 'false'");
     }
     
     return b;
 }
 
-static qson_value_t* qson_parse_number(qson_doc_t* doc)
+static juson_value_t* juson_parse_number(juson_doc_t* doc)
 {
     char* begin = doc->p - 1;
     char* p = begin; // roll back
     if (p[0] == '-')
         p++;
     if (p[0] == '0' && isdigit(p[1])) {
-        QSON_EXPECT(0, "number leading by '0'");
+        JUSON_EXPECT(0, "number leading by '0'");
     }
     
     int saw_dot = 0;
@@ -342,8 +342,8 @@ static qson_value_t* qson_parse_number(qson_doc_t* doc)
             break;
         
         case '.':
-            QSON_EXPECT(!saw_e, "exponential term must be integer");
-            QSON_EXPECT(!saw_dot, "unexpected '.'");
+            JUSON_EXPECT(!saw_e, "exponential term must be integer");
+            JUSON_EXPECT(!saw_dot, "unexpected '.'");
             saw_dot = 1;
             break;
         
@@ -351,7 +351,7 @@ static qson_value_t* qson_parse_number(qson_doc_t* doc)
         case 'E':
             if (p[1] == '-' || p[1] == '+')
                 p++;
-            QSON_EXPECT(!saw_e, "unexpected 'e'('E')");
+            JUSON_EXPECT(!saw_e, "unexpected 'e'('E')");
             saw_e = 1;
             break;
         default:
@@ -361,12 +361,12 @@ static qson_value_t* qson_parse_number(qson_doc_t* doc)
     }
     
 ret:;
-    qson_value_t* val;
+    juson_value_t* val;
     if (saw_dot || saw_e) {
-        val = qson_new(doc, QSON_FLOAT);
+        val = juson_new(doc, JUSON_FLOAT);
         val->fval = atof(begin);
     } else {
-        val = qson_new(doc, QSON_INT);
+        val = juson_new(doc, JUSON_INT);
         val->ival = atoi(begin);  
     }
     
@@ -374,40 +374,40 @@ ret:;
     return val;
 }
 
-static qson_value_t* qson_parse_array(qson_doc_t* doc)
+static juson_value_t* juson_parse_array(juson_doc_t* doc)
 {
-    qson_value_t* arr = qson_new(doc, QSON_ARRAY);
+    juson_value_t* arr = juson_new(doc, JUSON_ARRAY);
     if (arr == NULL)
         return NULL;
-    if (qson_add_array(doc, arr) == NULL)
+    if (juson_add_array(doc, arr) == NULL)
         return NULL;
         
     if (try(doc, ']'))
         return arr;
         
     while (1) {
-        qson_value_t** ele = qson_array_push(arr);
+        juson_value_t** ele = juson_array_push(arr);
         if (ele == NULL)
             return NULL;
         
-        *ele = qson_parse_value(doc);
+        *ele = juson_parse_value(doc);
         if (*ele == NULL)
             return NULL;
         
         char ch = next(doc);
         if (ch == ']')
             break;
-        QSON_EXPECT(ch == ',', "expect ',' or ']'");
+        JUSON_EXPECT(ch == ',', "expect ',' or ']'");
     }
     return arr;
 }
 
-static qson_value_t** qson_array_push(qson_value_t* arr)
+static juson_value_t** juson_array_push(juson_value_t* arr)
 {
     if (arr->size >= arr->capacity) {
         int new_c = arr->capacity * 2 + 1;
-        arr->adata = (qson_value_t**)realloc(arr->adata,
-                new_c * sizeof(qson_value_t*));
+        arr->adata = (juson_value_t**)realloc(arr->adata,
+                new_c * sizeof(juson_value_t*));
         if (arr->adata == NULL) {
             fprintf(stderr, "error: no memory");
             return NULL;
@@ -419,16 +419,16 @@ static qson_value_t** qson_array_push(qson_value_t* arr)
     return &arr->adata[arr->size++];
 }
 
-static qson_value_t* qson_array_back(qson_value_t* arr)
+static juson_value_t* juson_array_back(juson_value_t* arr)
 {
     if (arr->adata == NULL)
         return NULL;
     return arr->adata[arr->size - 1];
 }
 
-static qson_value_t* qson_add_array(qson_doc_t* doc, qson_value_t* arr)
+static juson_value_t* juson_add_array(juson_doc_t* doc, juson_value_t* arr)
 {
-    qson_value_t* node = qson_new(doc, QSON_LIST);
+    juson_value_t* node = juson_new(doc, JUSON_LIST);
     if (node == NULL)
         return NULL;
     
@@ -440,9 +440,9 @@ static qson_value_t* qson_add_array(qson_doc_t* doc, qson_value_t* arr)
 }
 
 
-static qson_value_t* qson_parse_token(qson_doc_t* doc)
+static juson_value_t* juson_parse_token(juson_doc_t* doc)
 {
-    qson_value_t* str = qson_new(doc, QSON_STRING);
+    juson_value_t* str = juson_new(doc, JUSON_STRING);
     if (str == NULL)
         return NULL;
     
@@ -463,10 +463,10 @@ static qson_value_t* qson_parse_token(qson_doc_t* doc)
                 break;
             case 'u':
                 for (int i = 0; i < 4; i++)
-                    QSON_EXPECT(isxdigit(*p++), "expect hexical");
+                    JUSON_EXPECT(isxdigit(*p++), "expect hexical");
                 break;
             default:
-                QSON_EXPECT(0, "unexpected control label");
+                JUSON_EXPECT(0, "unexpected control label");
             }
             break;
         
@@ -477,7 +477,7 @@ static qson_value_t* qson_parse_token(qson_doc_t* doc)
             return str;
         
         case '\0':
-            QSON_EXPECT(0, "unexpected end of file, expect '\"'");    
+            JUSON_EXPECT(0, "unexpected end of file, expect '\"'");    
         default:
             break;
         }

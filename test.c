@@ -1,4 +1,4 @@
-#include "qson.h"
+#include "juson.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -9,32 +9,32 @@ int main(int argc, char* argv[])
     if (argc < 2)
         return -1;
 
-    qson_doc_t doc;
-    if (qson_load(&doc, argv[1]) == QSON_ERR) {
+    juson_doc_t doc;
+    if (juson_load(&doc, argv[1]) == JUSON_ERR) {
         return -1;
     }
     
-    qson_value_t* obj = qson_parse(&doc);
+    juson_value_t* obj = juson_parse(&doc);
     if (obj == NULL)
         return  -1;
-    assert(obj->t == QSON_OBJECT);
-    qson_value_t* pair = obj->head;
+    assert(obj->t == JUSON_OBJECT);
+    juson_value_t* pair = obj->head;
     while (pair != NULL) {
         printf("%s: ", pair->key->sdata);
-        qson_value_t* val = pair->val;
+        juson_value_t* val = pair->val;
         switch (val->t) {
-        case QSON_STRING:
+        case JUSON_STRING:
             printf("%s", val->sdata);
             break;
-        case QSON_INT:
+        case JUSON_INT:
             printf("%d", val->ival);
             break;
-        case QSON_FLOAT:
+        case JUSON_FLOAT:
             printf("%f", val->fval);
             break;
-        case QSON_ARRAY:
+        case JUSON_ARRAY:
             for (int i = 0; i < val->size; i++) {
-                if (val->adata[i]->t == QSON_STRING)
+                if (val->adata[i]->t == JUSON_STRING)
                     printf("%s, ", val->adata[i]->sdata);
             }
             break;
@@ -45,6 +45,6 @@ int main(int argc, char* argv[])
         pair = pair->next;
     }
    
-   qson_destroy(&doc);
+   juson_destroy(&doc);
     return 0;
 }
