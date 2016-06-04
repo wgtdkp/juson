@@ -31,7 +31,7 @@ static juson_value_t* juson_parse_bool(juson_doc_t* doc);
 static juson_value_t* juson_parse_number(juson_doc_t* doc);
 static juson_value_t* juson_parse_array(juson_doc_t* doc);
 static juson_value_t** juson_array_push(juson_value_t* arr);
-static juson_value_t* juson_array_back(juson_value_t* arr);
+//static juson_value_t* juson_array_back(juson_value_t* arr);
 static juson_value_t* juson_add_array(juson_doc_t* doc, juson_value_t* arr);
 static juson_value_t* juson_parse_token(juson_doc_t* doc);
 
@@ -128,39 +128,57 @@ char* juson_load(char* file_name)
         return NULL;
     }
     
-    fread(p, len, 1, file);
+    if (fread(p, len, 1, file) != 1) {
+        free(p);
+        fclose(file);
+        return NULL;
+    }
+    
     p[len] = '\0';
     
     fclose(file);
     return p;
 }
 
+static void juson_chunk_init(juson_chunk_t* chunk)
+{
+    chunk->next = NULL;
+    
+    // Init slots
+    juson_slot_t* slot = chunk->slots;
+    for (int i = 0; i < JUSON_CHUNK_SIZE - 1; i++) {
+        slot->next = slot + 1;
+        slot = slot->next;
+    }
+    slot->next = NULL;
+}
+
 static void juson_pool_init(juson_pool_t* pool, int chunk_size)
 {
-    pool->chunk_size = chunk_size;
     pool->allocated_n = 0;
-    pool->cur = NULL;
-    
-    pool->chunk_arr.t = JUSON_ARRAY;
-    pool->chunk_arr.size = 0;
-    pool->chunk_arr.capacity = 0;
-    pool->chunk_arr.adata = NULL;
+    juson_chunk_init(&pool->head);
+    pool->cur = pool->head.slots;
 }
 
 static juson_value_t* juson_alloc(juson_doc_t* doc)
 {
     juson_pool_t* pool = &doc->pool;
-    juson_value_t* back = juson_array_back(&pool->chunk_arr);
-    if (pool->cur == NULL || pool->cur - back == pool->chunk_size) {
-        juson_value_t** chunk = juson_array_push(&pool->chunk_arr);
-        if (chunk == NULL)
-            return NULL;
-        *chunk = malloc(pool->chunk_size * sizeof(juson_value_t));
-        JUSON_EXPECT(*chunk != NULL, "no memory");
-        pool->cur = juson_array_back(&pool->chunk_arr);
+    if (pool->cur == NULL) {
+        juson_chunk_t* chunk = malloc(sizeof(juson_chunk_t));
+        JUSON_EXPECT(chunk != NULL, "no memory");
+        
+        juson_chunk_init(chunk);
+        pool->cur = chunk->slots;
+        
+        // Insert new chunk after the head
+        chunk->next = pool->head.next;
+        pool->head.next = chunk;        
     }
+    
     pool->allocated_n++;
-    return pool->cur++;
+    juson_value_t* ret = &pool->cur->val;
+    pool->cur = pool->cur->next;
+    return ret;
 }
 
 void juson_destroy(juson_doc_t* doc)
@@ -181,11 +199,12 @@ void juson_destroy(juson_doc_t* doc)
     
     // Destroy pool
     juson_pool_t* pool = &doc->pool;
-    for (int i = 0; i < pool->chunk_arr.size; i++)
-        free(pool->chunk_arr.adata[i]);
-    free(pool->chunk_arr.adata);
-    pool->chunk_arr.adata = NULL;
-    
+    juson_chunk_t* chunk = pool->head.next;
+    while (chunk != NULL) {
+        juson_chunk_t* tmp_next = chunk->next;
+        free(chunk);
+        chunk = tmp_next;
+    }
 }
 
 juson_value_t* juson_parse(juson_doc_t* doc)
@@ -432,12 +451,14 @@ static juson_value_t** juson_array_push(juson_value_t* arr)
     return &arr->adata[arr->size++];
 }
 
+/*
 static juson_value_t* juson_array_back(juson_value_t* arr)
 {
     if (arr->adata == NULL)
         return NULL;
     return arr->adata[arr->size - 1];
 }
+*/
 
 static juson_value_t* juson_add_array(juson_doc_t* doc, juson_value_t* arr)
 {
@@ -502,12 +523,12 @@ static juson_value_t* juson_parse_token(juson_doc_t* doc)
 
 juson_value_t* juson_object_get(juson_value_t* obj, char* name)
 {
-    if (onj->t != JUSON_OBJECT)
+    if (obj->t != JUSON_OBJECT)
         return NULL;
         
     juson_value_t* p = obj->head;
     while (p != NULL) {
-        if (strncmp(p->key->stata, name, p->key->len) == 0)
+        if (strncmp(p->key->sdata, name, p->key->len) == 0)
             return p->val;
         p = p->next;
     }

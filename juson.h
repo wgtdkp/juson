@@ -5,11 +5,11 @@
 
 #define JUSON_OK     (0)
 #define JUSON_ERR    (-1)
+#define JUSON_CHUNK_SIZE    (32)
 
 
-typedef enum   juson_type    juson_type_t;
-typedef struct juson_value   juson_value_t;
-typedef struct juson_pool    juson_pool_t;
+typedef enum   juson_type   juson_type_t;
+typedef struct juson_value  juson_value_t;
 typedef int                 juson_int_t;
 typedef float               juson_float_t;
 typedef unsigned char       juson_bool_t;
@@ -68,11 +68,33 @@ struct juson_value {
     };
 };
 
+typedef union  juson_slot   juson_slot_t;
+typedef struct juson_chunk  juson_chunk_t;
+typedef struct juson_pool   juson_pool_t;
+
+union juson_slot {
+    juson_slot_t* next;
+    juson_value_t val;
+};
+
+/*
+ * A chunk consists of two members:
+ * the pointer to the next chunk,
+ * and the raw memory for values.
+ * Layout of a chunk:
+ * ---------------------------------------
+ * next | raw memory (chunk_size * width)
+ * ---------------------------------------
+ */
+struct juson_chunk {
+    juson_chunk_t* next;
+    juson_slot_t slots[JUSON_CHUNK_SIZE];
+};
+
 struct juson_pool {
-    int chunk_size;
     int allocated_n;
-    juson_value_t* cur;
-    juson_value_t chunk_arr;
+    juson_slot_t* cur;
+    juson_chunk_t head;
 };
 
 typedef struct {
