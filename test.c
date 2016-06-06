@@ -26,6 +26,8 @@ int main(int argc, char* argv[])
         return -1;
     }
     printf("parse time: %f\n", (clock() - begin) * 1.0f / CLOCKS_PER_SEC);
+    printf("pool allocated: %d \n", json.pool.allocated_n);
+    
     juson_destroy(&json);
     return 0;
     
