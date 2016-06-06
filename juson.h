@@ -26,7 +26,6 @@ enum juson_type {
     JUSON_LIST,
 };
 
-
 struct juson_value {
     juson_type_t t;
     union {
@@ -77,15 +76,6 @@ union juson_slot {
     juson_value_t val;
 };
 
-/*
- * A chunk consists of two members:
- * the pointer to the next chunk,
- * and the raw memory for values.
- * Layout of a chunk:
- * ---------------------------------------
- * next | raw memory (chunk_size * width)
- * ---------------------------------------
- */
 struct juson_chunk {
     juson_chunk_t* next;
     juson_slot_t slots[JUSON_CHUNK_SIZE];
