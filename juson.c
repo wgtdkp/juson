@@ -128,9 +128,13 @@ char* juson_load(char* file_name)
         return NULL;
     }
     
-    fread(p, len, 1, file);
-    p[len] = '\0';
+    if (fread(p, len, 1, file) != 1) {
+        free(p);
+        fclose(file);
+        return NULL;
+    }
     
+    p[len] = '\0';
     fclose(file);
     return p;
 }
@@ -362,9 +366,9 @@ static juson_value_t* juson_parse_number(juson_doc_t* doc)
         
         case 'e':
         case 'E':
+            JUSON_EXPECT(!saw_e, "unexpected 'e'('E')");
             if (p[1] == '-' || p[1] == '+')
                 p++;
-            JUSON_EXPECT(!saw_e, "unexpected 'e'('E')");
             saw_e = 1;
             break;
         default:
@@ -502,12 +506,12 @@ static juson_value_t* juson_parse_token(juson_doc_t* doc)
 
 juson_value_t* juson_object_get(juson_value_t* obj, char* name)
 {
-    if (onj->t != JUSON_OBJECT)
+    if (obj->t != JUSON_OBJECT)
         return NULL;
         
     juson_value_t* p = obj->head;
     while (p != NULL) {
-        if (strncmp(p->key->stata, name, p->key->len) == 0)
+        if (strncmp(p->key->sdata, name, p->key->len) == 0)
             return p->val;
         p = p->next;
     }

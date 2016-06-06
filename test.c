@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     if ((json.mem = juson_load(argv[1])) == NULL) {
         return -1;
     }
-    printf("sizeof(juson_value_t): %d \n", sizeof(juson_value_t));
+    printf("sizeof(juson_value_t): %lu \n", sizeof(juson_value_t));
     printf("begin parsing...\n");
     clock_t begin = clock();
     juson_value_t* obj = juson_parse(&json);
