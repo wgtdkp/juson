@@ -5,7 +5,7 @@
 
 #define JUSON_OK     (0)
 #define JUSON_ERR    (-1)
-#define JUSON_CHUNK_SIZE    (32)
+#define JUSON_CHUNK_SIZE    (128)
 
 
 typedef enum   juson_type   juson_type_t;

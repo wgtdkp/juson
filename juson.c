@@ -52,11 +52,8 @@ static char next(juson_doc_t* doc)
                 doc->line++;
             p++;
         }
-            
-        if (*p == '/')
-            p = juson_parse_comment(doc, p + 1);
-        else
-            break;
+        if (*p != '/') break;
+        p = juson_parse_comment(doc, p + 1);
     }
     doc->p = p;
     if (*p != '\0')
@@ -157,7 +154,7 @@ static juson_value_t* juson_alloc(juson_doc_t* doc)
         chunk->next = pool->head.next;
         pool->head.next = chunk;        
     }
-    pool->allocated_n++;
+    ++pool->allocated_n;
     juson_value_t* ret = &pool->cur->val;
     pool->cur = pool->cur->next;
     return ret;
@@ -201,7 +198,7 @@ juson_value_t* juson_parse(juson_doc_t* doc)
     if (doc->val) {
         JUSON_EXPECT(doc->val->t == JUSON_OBJECT || doc->val->t == JUSON_ARRAY,
                 "a JSON payload should be an object or array");
-        JUSON_EXPECT(*doc->p == '\0', "unterminated");
+        JUSON_EXPECT(next(doc) == '\0', "unterminated");
     }
     return doc->val;
 }
