@@ -358,7 +358,7 @@ ret:
         val->fval = atof(begin);
     } else {
         val = juson_new(doc, JUSON_INT);
-        val->ival = atoi(begin);  
+        val->ival = atol(begin);  
     }
     doc->p = p;
     return val;
