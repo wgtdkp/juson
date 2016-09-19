@@ -366,11 +366,13 @@ static juson_value_t* juson_parse_number(juson_doc_t* doc)
         JUSON_EXPECT(0, "number leading by '0'");
     }
     
+    int digit_cnt = 0;
     int saw_dot = 0;
     int saw_e = 0;
     while (1) {
         switch (*p) {
         case '0' ... '9':
+            ++digit_cnt;
             break;
         
         case '.':
@@ -381,10 +383,12 @@ static juson_value_t* juson_parse_number(juson_doc_t* doc)
         
         case 'e':
         case 'E':
+            JUSON_EXPECT(digit_cnt, "expect digit before 'e'");
             JUSON_EXPECT(!saw_e, "unexpected 'e'('E')");
             if (p[1] == '-' || p[1] == '+')
-                p++;
+                ++p;
             saw_e = 1;
+            digit_cnt = 0;
             break;
         default:
             goto ret;
@@ -393,6 +397,7 @@ static juson_value_t* juson_parse_number(juson_doc_t* doc)
     }
     
 ret:;
+    JUSON_EXPECT(digit_cnt, saw_e ? "non digit after 'e'": "non digit in number");
     juson_value_t* val;
     if (saw_dot || saw_e) {
         val = juson_new(doc, JUSON_FLOAT);
@@ -499,13 +504,17 @@ static juson_value_t* juson_parse_token(juson_doc_t* doc)
                 break;
             case 'u':
                 for (int i = 0; i < 4; i++)
-                    JUSON_EXPECT(isxdigit(*p++), "expect hexical");
+                    JUSON_EXPECT(isxdigit(*++p), "expect hexical");
                 break;
             default:
                 JUSON_EXPECT(0, "unexpected control label");
             }
             break;
-        
+
+        case '\b': case '\f':
+        case '\n': case '\r': case '\t':
+            JUSON_EXPECT(0, "unexpected control label");
+
         case '\"':
             *p = '\0';  // to simplify printf
             doc->p = p + 1;
