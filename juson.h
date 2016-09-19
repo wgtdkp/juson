@@ -10,8 +10,8 @@
 
 typedef enum   juson_type   juson_type_t;
 typedef struct juson_value  juson_value_t;
-typedef int                 juson_int_t;
-typedef float               juson_float_t;
+typedef long                juson_int_t;
+typedef double              juson_float_t;
 typedef unsigned char       juson_bool_t;
 
 enum juson_type {
