@@ -220,7 +220,12 @@ juson_value_t* juson_parse(juson_doc_t* doc)
     juson_pool_init(&doc->pool, 16);
     
     doc->val = juson_parse_value(doc);
-    
+    if (doc->val) {
+        JUSON_EXPECT(doc->val->t == JUSON_OBJECT || doc->val->t == JUSON_ARRAY,
+                "a JSON payload should be an object or array");
+        JUSON_EXPECT(*doc->p == '\0', "unterminated");
+    }
+
     return doc->val;
 }
 
