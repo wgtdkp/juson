@@ -1,5 +1,5 @@
 # juson
-A lightweight josn parser in 500 lines pure C
+A lightweight json parser in 500 lines pure C
 
 ## DEPENDENCY
   none
