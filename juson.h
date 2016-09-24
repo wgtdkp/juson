@@ -12,15 +12,14 @@ extern "C" {
 #define JUSON_CHUNK_SIZE    (128)
 
 
-typedef enum   juson_type   juson_type_t;
 typedef struct juson_value  juson_value_t;
 typedef long                juson_int_t;
 typedef double              juson_float_t;
 typedef unsigned char       juson_bool_t;
 
-enum juson_type {
+typedef enum juson_type {
     JUSON_OBJECT,
-    JUSON_INT,
+    JUSON_INTEGER,
     JUSON_FLOAT,
     JUSON_ARRAY,
     JUSON_BOOL,
@@ -28,7 +27,7 @@ enum juson_type {
     JUSON_NULL,
     JUSON_PAIR,
     JUSON_LIST,
-};
+} juson_type_t;
 
 struct juson_value {
     juson_type_t t;
@@ -39,8 +38,9 @@ struct juson_value {
         
         // String
         struct {
-            char* sdata;
-            int len;  
+            const char* sdata;
+            int need_free;
+            int len;
         };
         
         // Array
@@ -92,20 +92,14 @@ struct juson_pool {
 };
 
 typedef struct {
-    char* mem;
-    char* p;
-    
+    const char* p;    
     int line;
-    
     juson_value_t* val;
-    juson_value_t arr_list;
-    
     juson_pool_t pool;
 } juson_doc_t;
 
 char* juson_load(char* file_name);
-juson_value_t* juson_parse(juson_doc_t* doc);
-juson_value_t* juson_parse_string(juson_doc_t* doc, char* str);
+juson_value_t* juson_parse(juson_doc_t* doc, const char* json);
 void juson_destroy(juson_doc_t* doc);
 juson_value_t* juson_object_get(juson_value_t* obj, char* name);
 juson_value_t* juson_array_get(juson_value_t* arr, size_t idx);
