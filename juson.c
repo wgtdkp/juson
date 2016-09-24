@@ -21,7 +21,20 @@ if (!(cond)) {                          \
     JUSON_FAIL(v);                      \
 };
 
-static void juson_error(juson_doc_t* doc, const char* format, ...);
+#if ERR_HINT
+static void juson_error(juson_doc_t* doc, const char* format, ...)
+{
+    fprintf(stderr, "error: line %d: ", doc->line);    
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+    fprintf(stderr, "\n");
+}
+#else
+#define juson_error(doc, format, ...)
+#endif
+
 static int next(juson_doc_t* doc);
 static int try(juson_doc_t* doc, char x);
 static juson_value_t* juson_new(juson_doc_t* doc, juson_type_t t);
@@ -36,12 +49,12 @@ static juson_value_t* juson_parse_null(juson_doc_t* doc);
 static juson_value_t* juson_parse_bool(juson_doc_t* doc);
 static juson_value_t* juson_parse_number(juson_doc_t* doc);
 static juson_value_t* juson_parse_array(juson_doc_t* doc);
-static juson_value_t** juson_array_push(juson_value_t* arr);
+static inline juson_value_t** juson_array_push(juson_value_t* arr);
 static juson_value_t* juson_parse_string(juson_doc_t* doc);
 static char* juson_write_utf8(juson_doc_t* doc, char* p, uint32_t val);
 static void juson_free_value(juson_value_t* v);
 
-static int inline xdigit(int c)
+static inline int xdigit(int c)
 {
     switch (c) {
     case '0' ... '9': return c - '0';
@@ -52,23 +65,12 @@ static int inline xdigit(int c)
     return 0;
 }
 
-static uint32_t inline ucs(const char* p)
+static inline uint32_t ucs(const char* p)
 {
     return (xdigit(p[0]) << 12) + (xdigit(p[1]) << 8) +
            (xdigit(p[2]) << 4) + xdigit(p[3]);
 }
 
-static void juson_error(juson_doc_t* doc, const char* format, ...)
-{
-#if ERR_HINT
-    fprintf(stderr, "error: line %d: ", doc->line);    
-    va_list args;
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-    fprintf(stderr, "\n");
-#endif
-}
 
 static int next(juson_doc_t* doc)
 {
@@ -404,8 +406,8 @@ static juson_value_t* juson_parse_array(juson_doc_t* doc)
 {
     juson_value_t* arr = juson_new(doc, JUSON_ARRAY);
     if (try(doc, ']')) return arr;
-        
-    while (1) {
+
+    while (true) {
         juson_value_t** ele = juson_array_push(arr);
         *ele = juson_parse_value(doc);
         if (*ele == NULL)
@@ -418,12 +420,14 @@ static juson_value_t* juson_parse_array(juson_doc_t* doc)
     return arr;
 }
 
-static juson_value_t** juson_array_push(juson_value_t* arr)
+static inline juson_value_t** juson_array_push(juson_value_t* arr)
 {
     if (arr->size >= arr->capacity) {
         int new_c = arr->capacity * 2 + 1;
-        arr->adata = (juson_value_t**)realloc(arr->adata,
-                new_c * sizeof(juson_value_t*));
+        juson_value_t** tmp = arr->adata;
+        arr->adata = malloc(new_c * sizeof(juson_value_t*));
+        memcpy(arr->adata, tmp, arr->capacity * sizeof(juson_value_t*));
+        free(tmp);
         arr->capacity = new_c;
     }
     return &arr->adata[arr->size++];
