@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define JUSON_OK     (0)
 #define JUSON_ERR    (-1)
 #define JUSON_CHUNK_SIZE    (128)
@@ -105,5 +109,9 @@ juson_value_t* juson_parse_string(juson_doc_t* doc, char* str);
 void juson_destroy(juson_doc_t* doc);
 juson_value_t* juson_object_get(juson_value_t* obj, char* name);
 juson_value_t* juson_array_get(juson_value_t* arr, size_t idx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

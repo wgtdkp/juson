@@ -18,7 +18,7 @@ static char next(juson_doc_t* doc);
 static int try(juson_doc_t* doc, char x);
 static juson_value_t* juson_new(juson_doc_t* doc, juson_type_t t);
 static void juson_object_add(juson_value_t* obj, juson_value_t* pair);
-static void juson_pool_init(juson_pool_t* pool, int chunk_size);
+static void juson_pool_init(juson_pool_t* pool);
 static juson_value_t* juson_alloc(juson_doc_t* doc);
 static char* juson_parse_comment(juson_doc_t* doc, char* p);
 static juson_value_t* juson_parse_object(juson_doc_t* doc);
@@ -134,7 +134,7 @@ static void juson_chunk_init(juson_chunk_t* chunk)
     slot->next = NULL;
 }
 
-static void juson_pool_init(juson_pool_t* pool, int chunk_size)
+static void juson_pool_init(juson_pool_t* pool)
 {
     pool->allocated_n = 0;
     juson_chunk_init(&pool->head);
@@ -192,7 +192,7 @@ juson_value_t* juson_parse(juson_doc_t* doc)
     doc->arr_list.t = JUSON_LIST;
     doc->arr_list.data = NULL;
     doc->arr_list.next = NULL;
-    juson_pool_init(&doc->pool, 16);
+    juson_pool_init(&doc->pool);
     
     doc->val = juson_parse_value(doc);
     if (doc->val) {
