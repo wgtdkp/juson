@@ -331,9 +331,11 @@ static juson_value_t* juson_parse_number(juson_doc_t* doc)
             ++digit_cnt;
             break;
         case '.':
+            JUSON_EXPECT(digit_cnt, "expect digit before '.'");
             JUSON_EXPECT(!saw_e, "exponential term must be integer");
             JUSON_EXPECT(!saw_dot, "unexpected '.'");
             saw_dot = 1;
+            digit_cnt = 0;
             break;
         case 'e':
         case 'E':
@@ -351,14 +353,14 @@ static juson_value_t* juson_parse_number(juson_doc_t* doc)
     }
     
 ret:
-    JUSON_EXPECT(digit_cnt, saw_e ? "non digit after 'e'": "non digit in number");
+    JUSON_EXPECT(digit_cnt, "non digit after 'e'/'.'");
     juson_value_t* val;
     if (saw_dot || saw_e) {
         val = juson_new(doc, JUSON_FLOAT);
         val->fval = atof(begin);
     } else {
         val = juson_new(doc, JUSON_INT);
-        val->ival = atoi(begin);  
+        val->ival = atol(begin);  
     }
     doc->p = p;
     return val;
