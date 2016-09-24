@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define ERR_HINT    0
+
 #define JUSON_OK     (0)
 #define JUSON_ERR    (-1)
 #define JUSON_CHUNK_SIZE    (128)

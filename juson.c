@@ -60,12 +60,14 @@ static uint32_t inline ucs(const char* p)
 
 static void juson_error(juson_doc_t* doc, const char* format, ...)
 {
+#if ERR_HINT
     fprintf(stderr, "error: line %d: ", doc->line);    
     va_list args;
     va_start(args, format);
     vfprintf(stderr, format, args);
     va_end(args);
     fprintf(stderr, "\n");
+#endif
 }
 
 static int next(juson_doc_t* doc)
