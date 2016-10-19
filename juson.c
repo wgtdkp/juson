@@ -9,17 +9,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define JUSON_FAIL(v)  {    \
+#define JUSON_FAIL(v) {     \
     juson_free_value(v);    \
     return NULL;            \
 };
 
-#define JUSON_EXPECT(v, cond, msg)      \
-if (!(cond)) {                          \
-    fprintf(stderr, "%s: %d: ", __func__, __LINE__); \
-    juson_error(doc, msg);              \
-    JUSON_FAIL(v);                      \
-};
+#define JUSON_EXPECT(v, cond, msg) {                        \
+    if (!(cond)) {                                          \
+        fprintf(stderr, "%s: %d: ", __func__, __LINE__);    \
+        juson_error(doc, msg);                              \
+        JUSON_FAIL(v);                                      \
+    };                                                      \
+}
 
 #if ERR_HINT
 static void juson_error(juson_doc_t* doc, const char* format, ...)
