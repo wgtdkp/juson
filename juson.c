@@ -20,7 +20,7 @@
         juson_error(doc, msg);                              \
         JUSON_FAIL(v);                                      \
     };                                                      \
-}
+};
 
 #if ERR_HINT
 static void juson_error(juson_doc_t* doc, const char* format, ...)
