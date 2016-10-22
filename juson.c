@@ -227,7 +227,7 @@ static void juson_free_value(juson_value_t* v)
         break;
     case JUSON_STRING:
         if (v->need_free)
-            free((char*)v->sdata);
+            free((char*)v->sval);
         break;
     default:
         assert(false);
@@ -437,7 +437,7 @@ static inline juson_value_t** juson_array_push(juson_value_t* arr)
 static juson_value_t* juson_parse_string(juson_doc_t* doc)
 {
     juson_value_t* str = juson_new(doc, JUSON_STRING);
-    str->sdata = doc->p;
+    str->sval = doc->p;
     bool need_copy = false;
     const char* p = doc->p;
     for (; ; ++p) {
@@ -464,7 +464,7 @@ static juson_value_t* juson_parse_string(juson_doc_t* doc)
             JUSON_EXPECT(str, 0, "unexpected control label");
         case '\"':
             doc->p = p + 1;
-            str->len = p - str->sdata;
+            str->len = p - str->sval;
             goto end_of_loop;
         case '\0':
             JUSON_EXPECT(str, 0, "unexpected end of file, expect '\"'");    
@@ -476,8 +476,8 @@ end_of_loop:
     if (!need_copy) return str;
     str->need_free = true;
     char* q = malloc(str->len + 1);
-    p = str->sdata;
-    str->sdata = q;
+    p = str->sval;
+    str->sval = q;
     for (int i = 0; i < str->len; ++i) {
         int c = p[i];
         if (c == '\\') {
@@ -508,7 +508,7 @@ end_of_loop:
         }
     }
     *q = '\0';
-    str->len = q - str->sdata;
+    str->len = q - str->sval;
     return str; // Make compiler happy
 }
 
@@ -553,7 +553,7 @@ juson_value_t* juson_object_get(juson_value_t* obj, char* name)
         return NULL;
     juson_value_t* p = obj->head;
     while (p != NULL) {
-        if (strncmp(p->key->sdata, name, p->key->len) == 0)
+        if (strncmp(p->key->sval, name, p->key->len) == 0)
             return p->val;
         p = p->next;
     }

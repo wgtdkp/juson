@@ -40,7 +40,7 @@ struct juson_value {
         
         // String
         struct {
-            const char* sdata;
+            const char* sval;
             int need_free;
             int len;
         };
