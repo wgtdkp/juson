@@ -562,7 +562,7 @@ juson_value_t* juson_object_get(juson_value_t* obj, char* name)
 
 juson_value_t* juson_array_get(juson_value_t* arr, size_t idx)
 {
-    if (arr->t != JUSON_OBJECT) return NULL;
+    if (arr->t != JUSON_ARRAY) return NULL;
     if (idx >= arr->size) return NULL;
     return arr->adata[idx];
 }
