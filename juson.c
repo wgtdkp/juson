@@ -23,8 +23,7 @@
 };
 
 #if ERR_HINT
-static void juson_error(juson_doc_t* doc, const char* format, ...)
-{
+static void juson_error(juson_doc_t* doc, const char* format, ...) {
     fprintf(stderr, "error: line %d: ", doc->line);    
     va_list args;
     va_start(args, format);
@@ -55,8 +54,7 @@ static juson_value_t* juson_parse_string(juson_doc_t* doc);
 static char* juson_write_utf8(juson_doc_t* doc, char* p, uint32_t val);
 static void juson_free_value(juson_value_t* v);
 
-static inline int xdigit(int c)
-{
+static inline int xdigit(int c) {
     switch (c) {
     case '0' ... '9': return c - '0';
     case 'a' ... 'f': return c - 'a' + 10;
@@ -66,15 +64,13 @@ static inline int xdigit(int c)
     return 0;
 }
 
-static inline uint32_t ucs(const char* p)
-{
+static inline uint32_t ucs(const char* p) {
     return (xdigit(p[0]) << 12) + (xdigit(p[1]) << 8) +
            (xdigit(p[2]) << 4) + xdigit(p[3]);
 }
 
 
-static int next(juson_doc_t* doc)
-{
+static int next(juson_doc_t* doc) {
     const char* p = doc->p;
     while (1) {
         while (*p == ' ' || *p == '\t' 
@@ -92,8 +88,7 @@ static int next(juson_doc_t* doc)
     return *p;
 }
 
-static int try(juson_doc_t* doc, char x)
-{
+static int try(juson_doc_t* doc, char x) {
     // Check empty array
     const char* p = doc->p;
     int line = doc->line;
@@ -105,16 +100,14 @@ static int try(juson_doc_t* doc, char x)
     return 0;
 }
 
-static juson_value_t* juson_new(juson_doc_t* doc, juson_type_t t)
-{
+static juson_value_t* juson_new(juson_doc_t* doc, juson_type_t t) {
     juson_value_t* val = juson_alloc(doc);
     memset(val, 0, sizeof(juson_value_t));
     val->t = t;
     return val;
 }
 
-static void juson_object_add(juson_value_t* obj, juson_value_t* pair)
-{
+static void juson_object_add(juson_value_t* obj, juson_value_t* pair) {
     assert(pair->t == JUSON_PAIR);
     if (obj->head == NULL) {
         obj->head = pair;
@@ -125,8 +118,7 @@ static void juson_object_add(juson_value_t* obj, juson_value_t* pair)
     }
 }
 
-char* juson_load(char* file_name)
-{
+char* juson_load(char* file_name) {
     FILE* file = fopen(file_name, "rb");
     if (file == NULL)
         return NULL;
@@ -150,8 +142,7 @@ char* juson_load(char* file_name)
     return p;
 }
 
-static void juson_chunk_init(juson_chunk_t* chunk)
-{
+static void juson_chunk_init(juson_chunk_t* chunk) {
     chunk->next = NULL;
     
     // Init slots
@@ -163,15 +154,13 @@ static void juson_chunk_init(juson_chunk_t* chunk)
     slot->next = NULL;
 }
 
-static void juson_pool_init(juson_pool_t* pool)
-{
+static void juson_pool_init(juson_pool_t* pool) {
     pool->allocated_n = 0;
     juson_chunk_init(&pool->head);
     pool->cur = pool->head.slots;
 }
 
-static juson_value_t* juson_alloc(juson_doc_t* doc)
-{
+static juson_value_t* juson_alloc(juson_doc_t* doc) {
     juson_pool_t* pool = &doc->pool;
     if (pool->cur == NULL) {
         juson_chunk_t* chunk = malloc(sizeof(juson_chunk_t));
@@ -188,8 +177,7 @@ static juson_value_t* juson_alloc(juson_doc_t* doc)
     return ret;
 }
 
-void juson_destroy(juson_doc_t* doc)
-{
+void juson_destroy(juson_doc_t* doc) {
     juson_free_value(doc->val);
     doc->val = NULL;
     
@@ -203,8 +191,7 @@ void juson_destroy(juson_doc_t* doc)
     }
 }
 
-static void juson_free_value(juson_value_t* v)
-{
+static void juson_free_value(juson_value_t* v) {
     if (v == NULL) return;
     switch (v->t) {
     case JUSON_OBJECT:
@@ -234,8 +221,7 @@ static void juson_free_value(juson_value_t* v)
     }
 }
 
-juson_value_t* juson_parse(juson_doc_t* doc, const char* json)
-{
+juson_value_t* juson_parse(juson_doc_t* doc, const char* json) {
     doc->val = NULL;
     doc->p = json;
     doc->line = 1;
@@ -253,8 +239,7 @@ juson_value_t* juson_parse(juson_doc_t* doc, const char* json)
 /*
  * C/C++ style comment
  */
-static const char* juson_parse_comment(juson_doc_t* doc, const char* p)
-{
+static const char* juson_parse_comment(juson_doc_t* doc, const char* p) {
     if (p[0] == '*') {
         ++p;
         while (p[0] != '\0' && !(p[0] == '*' && p[1] == '/')) {
@@ -275,8 +260,7 @@ static const char* juson_parse_comment(juson_doc_t* doc, const char* p)
     return p;
 }
 
-static juson_value_t* juson_parse_object(juson_doc_t* doc)
-{
+static juson_value_t* juson_parse_object(juson_doc_t* doc) {
     juson_value_t* obj = juson_new(doc, JUSON_OBJECT);
     if (try(doc, '}')) return obj;
         
@@ -294,8 +278,7 @@ static juson_value_t* juson_parse_object(juson_doc_t* doc)
     return obj;
 }
 
-static juson_value_t* juson_parse_pair(juson_doc_t* doc)
-{
+static juson_value_t* juson_parse_pair(juson_doc_t* doc) {
     juson_value_t* pair = juson_new(doc, JUSON_PAIR);
     pair->key = juson_parse_string(doc);
     if (pair->key == NULL)
@@ -307,8 +290,7 @@ static juson_value_t* juson_parse_pair(juson_doc_t* doc)
     return pair;
 }
 
-static juson_value_t* juson_parse_value(juson_doc_t* doc)
-{
+static juson_value_t* juson_parse_value(juson_doc_t* doc) {
     switch (next(doc)) {
     case '{': return juson_parse_object(doc);
     case '[': return juson_parse_array(doc);
@@ -322,8 +304,7 @@ static juson_value_t* juson_parse_value(juson_doc_t* doc)
     return NULL; // Make compiler happy
 }
 
-static juson_value_t* juson_parse_null(juson_doc_t* doc)
-{
+static juson_value_t* juson_parse_null(juson_doc_t* doc) {
     const char* p = doc->p;
     if (p[0] == 'u' && p[1] == 'l' && p[2] == 'l') {
         doc->p = p + 3;
@@ -332,8 +313,7 @@ static juson_value_t* juson_parse_null(juson_doc_t* doc)
     return NULL;
 }
 
-static juson_value_t* juson_parse_bool(juson_doc_t* doc)
-{
+static juson_value_t* juson_parse_bool(juson_doc_t* doc) {
     juson_value_t* b = juson_new(doc, JUSON_BOOL);
     
     const char* p = doc->p - 1;
@@ -350,8 +330,7 @@ static juson_value_t* juson_parse_bool(juson_doc_t* doc)
     return b;
 }
 
-static juson_value_t* juson_parse_number(juson_doc_t* doc)
-{
+static juson_value_t* juson_parse_number(juson_doc_t* doc) {
     const char* begin = doc->p - 1;
     const char* p = begin; // roll back
     if (p[0] == '-')
@@ -403,8 +382,7 @@ ret:
     return val;
 }
 
-static juson_value_t* juson_parse_array(juson_doc_t* doc)
-{
+static juson_value_t* juson_parse_array(juson_doc_t* doc) {
     juson_value_t* arr = juson_new(doc, JUSON_ARRAY);
     if (try(doc, ']')) return arr;
 
@@ -421,8 +399,7 @@ static juson_value_t* juson_parse_array(juson_doc_t* doc)
     return arr;
 }
 
-static inline juson_value_t** juson_array_push(juson_value_t* arr)
-{
+static inline juson_value_t** juson_array_push(juson_value_t* arr) {
     if (arr->size >= arr->capacity) {
         int new_c = arr->capacity * 2 + 1;
         juson_value_t** tmp = arr->adata;
@@ -434,8 +411,7 @@ static inline juson_value_t** juson_array_push(juson_value_t* arr)
     return &arr->adata[arr->size++];
 }
 
-static juson_value_t* juson_parse_string(juson_doc_t* doc)
-{
+static juson_value_t* juson_parse_string(juson_doc_t* doc) {
     juson_value_t* str = juson_new(doc, JUSON_STRING);
     str->sval = doc->p;
     bool need_copy = false;
@@ -512,8 +488,7 @@ end_of_loop:
     return str; // Make compiler happy
 }
 
-static char* juson_write_utf8(juson_doc_t* doc, char* p, uint32_t val)
-{
+static char* juson_write_utf8(juson_doc_t* doc, char* p, uint32_t val) {
     if (val < 0x80) {
         *p++ = val & 0x7f;
     } else if (val < 0x800) {
@@ -547,8 +522,7 @@ static char* juson_write_utf8(juson_doc_t* doc, char* p, uint32_t val)
     return p;
 }
 
-juson_value_t* juson_object_get(juson_value_t* obj, char* name)
-{
+juson_value_t* juson_object_get(juson_value_t* obj, char* name) {
     if (obj->t != JUSON_OBJECT)
         return NULL;
     juson_value_t* p = obj->head;
@@ -560,8 +534,7 @@ juson_value_t* juson_object_get(juson_value_t* obj, char* name)
     return NULL;
 }
 
-juson_value_t* juson_array_get(juson_value_t* arr, size_t idx)
-{
+juson_value_t* juson_array_get(juson_value_t* arr, size_t idx) {
     if (arr->t != JUSON_ARRAY) return NULL;
     if (idx >= arr->size) return NULL;
     return arr->adata[idx];
