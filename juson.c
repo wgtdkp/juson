@@ -118,7 +118,7 @@ static void juson_object_add(juson_value_t* obj, juson_value_t* pair) {
     }
 }
 
-char* juson_load(char* file_name) {
+char* juson_load(const char* file_name) {
     FILE* file = fopen(file_name, "rb");
     if (file == NULL)
         return NULL;
