@@ -1,4 +1,4 @@
-# juson
+# juson [![Build Status](https://travis-ci.org/wgtdkp/juson.svg?branch=master)](https://travis-ci.org/wgtdkp/juson)
 A lightweight json parser in 500 lines pure C
 
 ## DEPENDENCY
