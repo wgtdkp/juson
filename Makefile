@@ -7,6 +7,8 @@ CFLAGS = -O2 -pg -Wall -std=c11 -Wall -I./
 OBJS_DIR = build/
 OBJS = $(SRCS:.c=.o)
 
+default: $(TARGET)
+
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
