@@ -73,8 +73,8 @@ static inline uint32_t ucs(const char* p) {
 static int next(juson_doc_t* doc) {
     const char* p = doc->p;
     while (1) {
-        while (*p == ' ' || *p == '\t' 
-                || *p == '\r' || *p == '\n') {
+        while (*p == ' ' || *p == '\t' ||
+               *p == '\r' || *p == '\n') {
             if (*p == '\n')
                 ++doc->line;
             ++p;
@@ -229,7 +229,7 @@ juson_value_t* juson_parse(juson_doc_t* doc, const char* json) {
     juson_value_t* root = juson_parse_value(doc);
     if (root) {
         JUSON_EXPECT(root, root->t == JUSON_OBJECT || root->t == JUSON_ARRAY,
-                "a JSON payload should be an object or array");
+                     "a JSON payload should be an object or array");
         JUSON_EXPECT(root, next(doc) == '\0', "unterminated");
     }
     doc->val = root;
@@ -427,8 +427,11 @@ static juson_value_t* juson_parse_string(juson_doc_t* doc) {
                 need_copy = true;
                 break;
             case 'u':
-                for (int i = 0; i < 4; ++i)
-                    JUSON_EXPECT(str, isxdigit(*++p), "expect hexical");
+                for (int i = 0; i < 4; ++i) {
+                    // Don't use expression has side-effect in macro
+                    bool isxdigit = isxdigit(*++p);
+                    JUSON_EXPECT(str, isxdigit, "expect hexical");
+                }
                 need_copy = true;
                 break;
             default:
@@ -472,7 +475,8 @@ end_of_loop:
                 if (val >= 0xd800 && val < 0xe000) {
                     JUSON_EXPECT(str, p[i + 5] == '\\', "invalid UCS");
                     JUSON_EXPECT(str, p[i + 6] == 'u', "invalid UCS");
-                    val = (((val - 0xd800) << 10) | (0x03ff & (ucs(&p[i + 7]) - 0xdc00))) + 0x10000;
+                    uint32_t val_tail = 0x03ff & (ucs(&p[i + 7]) - 0xdc00);
+                    val = (((val - 0xd800) << 10) | val_tail) + 0x10000;
                     i += 6;
                 }
                 q = juson_write_utf8(doc, q, val);
@@ -485,7 +489,7 @@ end_of_loop:
     }
     *q = '\0';
     str->len = q - str->sval;
-    return str; // Make compiler happy
+    return str;
 }
 
 static char* juson_write_utf8(juson_doc_t* doc, char* p, uint32_t val) {
