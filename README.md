@@ -2,7 +2,7 @@
 A lightweight json parser in 500 lines pure C
 
 ## DEPENDENCY
-  none
+  None
 
 ## TRY
   ```bash
@@ -11,5 +11,5 @@ A lightweight json parser in 500 lines pure C
   ```
 
 ## USAGE
-  copy _juson.c_ and _juson.h_ into your project, that's it.
+  Copy _juson.c_ and _juson.h_ into your project, that's it.
 
