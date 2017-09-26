@@ -22,7 +22,7 @@
     };                                                      \
 };
 
-#if ERR_HINT
+#if JUSON_ERR_HINT
 static void juson_error(juson_doc_t* doc, const char* format, ...) {
     fprintf(stderr, "error: line %d: ", doc->line);    
     va_list args;

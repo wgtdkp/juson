@@ -7,12 +7,10 @@
 extern "C" {
 #endif
 
-#define ERR_HINT    0
-
-#define JUSON_OK     (0)
-#define JUSON_ERR    (-1)
+#define JUSON_ERR_HINT      (0)
+#define JUSON_OK            (0)
+#define JUSON_ERR           (-1)
 #define JUSON_CHUNK_SIZE    (128)
-
 
 typedef struct juson_value  juson_value_t;
 typedef long                juson_int_t;
