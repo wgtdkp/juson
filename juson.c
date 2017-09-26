@@ -75,16 +75,20 @@ static int next(juson_doc_t* doc) {
     while (1) {
         while (*p == ' ' || *p == '\t' ||
                *p == '\r' || *p == '\n') {
-            if (*p == '\n')
+            if (*p == '\n') {
                 ++doc->line;
+            }
             ++p;
         }
-        if (*p != '/') break;
+        if (*p != '/') {
+            break;
+        }
         p = juson_parse_comment(doc, p + 1);
     }
     doc->p = p;
-    if (*p != '\0')
+    if (*p != '\0') {
         ++doc->p;
+    }
     return *p;
 }
 
@@ -93,8 +97,9 @@ static int try(juson_doc_t* doc, char x) {
     const char* p = doc->p;
     int line = doc->line;
     char c = next(doc);
-    if (c == x)
-        return 1;    
+    if (c == x) {
+        return 1;
+    }    
     doc->p = p;
     doc->line = line;
     return 0;
@@ -120,9 +125,9 @@ static void juson_object_add(juson_value_t* obj, juson_value_t* pair) {
 
 char* juson_load(const char* file_name) {
     FILE* file = fopen(file_name, "rb");
-    if (file == NULL)
+    if (file == NULL) {
         return NULL;
-    
+    }
     size_t len;
     fseek(file, 0, SEEK_END);
     len = ftell(file);
@@ -192,11 +197,14 @@ void juson_destroy(juson_doc_t* doc) {
 }
 
 static void juson_free_value(juson_value_t* v) {
-    if (v == NULL) return;
+    if (v == NULL) {
+        return;
+    }
     switch (v->t) {
     case JUSON_OBJECT:
-        for (juson_value_t* kid = v->head; kid != NULL; kid = kid->next)
+        for (juson_value_t* kid = v->head; kid != NULL; kid = kid->next) {
             juson_free_value(kid);
+        }
         break;
     case JUSON_INTEGER:
     case JUSON_FLOAT:
@@ -208,13 +216,15 @@ static void juson_free_value(juson_value_t* v) {
         juson_free_value(v->val);
         break;
     case JUSON_ARRAY:
-        for (int i = 0; i < v->size; ++i)
+        for (int i = 0; i < v->size; ++i) {
             juson_free_value(v->adata[i]);
+        }
         free(v->adata);
         break;
     case JUSON_STRING:
-        if (v->need_free)
+        if (v->need_free) {
             free((char*)v->sval);
+        }
         break;
     default:
         assert(false);
@@ -243,15 +253,18 @@ static const char* juson_parse_comment(juson_doc_t* doc, const char* p) {
     if (p[0] == '*') {
         ++p;
         while (p[0] != '\0' && !(p[0] == '*' && p[1] == '/')) {
-            if (p[0] == '\n')
+            if (p[0] == '\n') {
                 ++doc->line;
+            }
             ++p;
         }
-        if (p[0] != '\0')
+        if (p[0] != '\0') {
             p += 2;
+        }
     } else if (p[0] == '/'){
-        while (p[0] != '\n' && p[0] != '\0')
+        while (p[0] != '\n' && p[0] != '\0') {
             ++p;
+        }
         if (p[0] == '\n') {
             ++doc->line;
             ++p;
@@ -262,17 +275,20 @@ static const char* juson_parse_comment(juson_doc_t* doc, const char* p) {
 
 static juson_value_t* juson_parse_object(juson_doc_t* doc) {
     juson_value_t* obj = juson_new(doc, JUSON_OBJECT);
-    if (try(doc, '}')) return obj;
-        
+    if (try(doc, '}')) {
+        return obj;
+    }
     while (1) {
         JUSON_EXPECT(obj, next(doc) == '\"', "expect '\"'");
         juson_value_t* pair = juson_parse_pair(doc);
-        if (pair == NULL)
+        if (pair == NULL) {
             JUSON_FAIL(obj);
+        }
         juson_object_add(obj, pair);
         char c = next(doc);
-        if (c == '}')
+        if (c == '}') {
             break;
+        }
         JUSON_EXPECT(obj, c == ',', "expect ','");
     }
     return obj;
@@ -281,12 +297,14 @@ static juson_value_t* juson_parse_object(juson_doc_t* doc) {
 static juson_value_t* juson_parse_pair(juson_doc_t* doc) {
     juson_value_t* pair = juson_new(doc, JUSON_PAIR);
     pair->key = juson_parse_string(doc);
-    if (pair->key == NULL)
+    if (pair->key == NULL) {
         JUSON_FAIL(pair);
+    }
     JUSON_EXPECT(pair, next(doc) == ':', "expect ':'");
     pair->val = juson_parse_value(doc);
-    if (pair->val == NULL)
+    if (pair->val == NULL) {
         JUSON_FAIL(pair);
+    }
     return pair;
 }
 
@@ -320,8 +338,8 @@ static juson_value_t* juson_parse_bool(juson_doc_t* doc) {
     if (p[0] == 't' && p[1] == 'r' && p[2] == 'u' && p[3] == 'e') {
         b->bval = 1;
         doc->p = p + 4;
-    } else if (p[0] == 'f' && p[1] == 'a'
-            && p[2] == 'l' && p[3] == 's' && p[4] == 'e') {
+    } else if (p[0] == 'f' && p[1] == 'a' &&
+               p[2] == 'l' && p[3] == 's' && p[4] == 'e') {
         b->bval = 0;
         doc->p = p + 5;
     } else {
@@ -333,8 +351,9 @@ static juson_value_t* juson_parse_bool(juson_doc_t* doc) {
 static juson_value_t* juson_parse_number(juson_doc_t* doc) {
     const char* begin = doc->p - 1;
     const char* p = begin; // roll back
-    if (p[0] == '-')
+    if (p[0] == '-') {
         ++p;
+    }
     if (p[0] == '0' && isdigit(p[1]))
         JUSON_EXPECT(NULL, 0, "number leading by '0'");
     
@@ -357,8 +376,9 @@ static juson_value_t* juson_parse_number(juson_doc_t* doc) {
         case 'E':
             JUSON_EXPECT(NULL, digit_cnt, "expect digit before 'e'");
             JUSON_EXPECT(NULL, !saw_e, "unexpected 'e'('E')");
-            if (p[1] == '-' || p[1] == '+')
+            if (p[1] == '-' || p[1] == '+') {
                 ++p;
+            }
             saw_e = 1;
             digit_cnt = 0;
             break;
@@ -384,16 +404,19 @@ ret:
 
 static juson_value_t* juson_parse_array(juson_doc_t* doc) {
     juson_value_t* arr = juson_new(doc, JUSON_ARRAY);
-    if (try(doc, ']')) return arr;
-
+    if (try(doc, ']')) {
+        return arr;
+    }
     while (true) {
         juson_value_t** ele = juson_array_push(arr);
         *ele = juson_parse_value(doc);
-        if (*ele == NULL)
+        if (*ele == NULL) {
             JUSON_FAIL(arr);
+        }
         char c = next(doc);
-        if (c == ']')
+        if (c == ']') {
             break;
+        }
         JUSON_EXPECT(arr, c == ',', "expect ',' or ']'");
     }
     return arr;
@@ -428,7 +451,7 @@ static juson_value_t* juson_parse_string(juson_doc_t* doc) {
                 break;
             case 'u':
                 for (int i = 0; i < 4; ++i) {
-                    // Don't use expression has side-effect in macro
+                    // Don't use expression that has side-effect in macro
                     bool isxdigit = isxdigit(*++p);
                     JUSON_EXPECT(str, isxdigit, "expect hexical");
                 }
@@ -452,7 +475,9 @@ static juson_value_t* juson_parse_string(juson_doc_t* doc) {
     }
 
 end_of_loop:
-    if (!need_copy) return str;
+    if (!need_copy) {
+        return str;
+    }
     str->need_free = true;
     char* q = malloc(str->len + 1);
     p = str->sval;
@@ -527,19 +552,22 @@ static char* juson_write_utf8(juson_doc_t* doc, char* p, uint32_t val) {
 }
 
 juson_value_t* juson_object_get(juson_value_t* obj, char* name) {
-    if (obj->t != JUSON_OBJECT)
+    if (obj->t != JUSON_OBJECT) {
         return NULL;
+    }
     juson_value_t* p = obj->head;
     while (p != NULL) {
-        if (strncmp(p->key->sval, name, p->key->len) == 0)
+        if (strncmp(p->key->sval, name, p->key->len) == 0) {
             return p->val;
+        }
         p = p->next;
     }
     return NULL;
 }
 
 juson_value_t* juson_array_get(juson_value_t* arr, size_t idx) {
-    if (arr->t != JUSON_ARRAY) return NULL;
-    if (idx >= arr->size) return NULL;
+    if (arr->t != JUSON_ARRAY || idx >= arr->size) {
+        return NULL;
+    }
     return arr->adata[idx];
 }
