@@ -24,7 +24,7 @@
 
 #if JUSON_ERR_HINT
 static void juson_error(juson_doc_t* doc, const char* format, ...) {
-    fprintf(stderr, "error: line %d: ", doc->line);    
+    fprintf(stderr, "error: line %d: ", doc->line);
     va_list args;
     va_start(args, format);
     vfprintf(stderr, format, args);
@@ -99,7 +99,7 @@ static int try(juson_doc_t* doc, char x) {
     char c = next(doc);
     if (c == x) {
         return 1;
-    }    
+    }
     doc->p = p;
     doc->line = line;
     return 0;
@@ -149,7 +149,7 @@ char* juson_load(const char* file_name) {
 
 static void juson_chunk_init(juson_chunk_t* chunk) {
     chunk->next = NULL;
-    
+
     // Init slots
     juson_slot_t* slot = chunk->slots;
     for (int i = 0; i < JUSON_CHUNK_SIZE - 1; ++i) {
@@ -171,10 +171,10 @@ static juson_value_t* juson_alloc(juson_doc_t* doc) {
         juson_chunk_t* chunk = malloc(sizeof(juson_chunk_t));
         juson_chunk_init(chunk);
         pool->cur = chunk->slots;
-        
+
         // Insert new chunk after the head
         chunk->next = pool->head.next;
-        pool->head.next = chunk;        
+        pool->head.next = chunk;
     }
     ++pool->allocated_n;
     juson_value_t* ret = &pool->cur->val;
@@ -185,7 +185,7 @@ static juson_value_t* juson_alloc(juson_doc_t* doc) {
 void juson_destroy(juson_doc_t* doc) {
     juson_free_value(doc->val);
     doc->val = NULL;
-    
+
     // Clear pool
     juson_pool_t* pool = &doc->pool;
     juson_chunk_t* chunk = pool->head.next;
@@ -333,7 +333,7 @@ static juson_value_t* juson_parse_null(juson_doc_t* doc) {
 
 static juson_value_t* juson_parse_bool(juson_doc_t* doc) {
     juson_value_t* b = juson_new(doc, JUSON_BOOL);
-    
+
     const char* p = doc->p - 1;
     if (p[0] == 't' && p[1] == 'r' && p[2] == 'u' && p[3] == 'e') {
         b->bval = 1;
@@ -356,7 +356,7 @@ static juson_value_t* juson_parse_number(juson_doc_t* doc) {
     }
     if (p[0] == '0' && isdigit(p[1]))
         JUSON_EXPECT(NULL, 0, "number leading by '0'");
-    
+
     int digit_cnt = 0;
     int saw_dot = 0;
     int saw_e = 0;
@@ -387,7 +387,7 @@ static juson_value_t* juson_parse_number(juson_doc_t* doc) {
         }
         ++p;
     }
-    
+
 ret:
     JUSON_EXPECT(NULL, digit_cnt, "non digit after 'e'/'.'");
     juson_value_t* val;
@@ -396,7 +396,7 @@ ret:
         val->fval = atof(begin);
     } else {
         val = juson_new(doc, JUSON_INTEGER);
-        val->ival = atol(begin);  
+        val->ival = atol(begin);
     }
     doc->p = p;
     return val;
@@ -468,7 +468,7 @@ static juson_value_t* juson_parse_string(juson_doc_t* doc) {
             str->len = p - str->sval;
             goto end_of_loop;
         case '\0':
-            JUSON_EXPECT(str, 0, "unexpected end of file, expect '\"'");    
+            JUSON_EXPECT(str, 0, "unexpected end of file, expect '\"'");
         default: break;
         }
     }
