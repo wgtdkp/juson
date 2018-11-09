@@ -452,8 +452,8 @@ static juson_value_t* juson_parse_string(juson_doc_t* doc) {
             case 'u':
                 for (int i = 0; i < 4; ++i) {
                     // Don't use expression that has side-effect in macro
-                    bool isxdigit = isxdigit(*++p);
-                    JUSON_EXPECT(str, isxdigit, "expect hexical");
+                    bool is_xdigit = isxdigit(*++p);
+                    JUSON_EXPECT(str, is_xdigit, "expect hexical");
                 }
                 need_copy = true;
                 break;
@@ -461,8 +461,7 @@ static juson_value_t* juson_parse_string(juson_doc_t* doc) {
                 JUSON_EXPECT(str, 0, "unexpected control label");
             }
             break;
-        case '\b': case '\f':
-        case '\n': case '\r': case '\t':
+        case '\b': case '\n': case '\r': case '\t':
             JUSON_EXPECT(str, 0, "unexpected control label");
         case '\"':
             doc->p = p + 1;
@@ -490,7 +489,6 @@ end_of_loop:
             case '\\': *q++ = '\\'; break;
             case '/': *q++ = '/'; break;
             case 'b': *q++ = '\b'; break;
-            case 'f': *q++ = '\f'; break;
             case 'n': *q++ = '\n'; break;
             case 'r': *q++ = '\r'; break;
             case 't': *q++ = '\t'; break;
@@ -507,6 +505,7 @@ end_of_loop:
                 q = juson_write_utf8(doc, q, val);
                 i += 4;
             } break;
+            default: assert(false);
             }
         } else {
             *q++ = c;
